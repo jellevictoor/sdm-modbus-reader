@@ -68,7 +68,24 @@ async def root():
             font-size: 0.9em;
         }
 
-        .meter-grid {
+        .meter-section {
+            margin-bottom: 30px;
+        }
+
+        .meter-section h2 {
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .meter-grid-monophase {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+        }
+
+        .meter-grid-threephase {
             display: grid;
             gap: 20px;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -79,14 +96,6 @@ async def root():
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-
-        .meter-card.monophase {
-            max-width: 275px;
-        }
-
-        .meter-card.threephase {
-            max-width: 500px;
         }
 
         .meter-header {
@@ -190,7 +199,16 @@ async def root():
     <div class="container">
         <h1>⚡ SDM Meter Monitor</h1>
         <div class="last-update" id="lastUpdate">Loading...</div>
-        <div class="meter-grid" id="meterGrid"></div>
+
+        <div class="meter-section">
+            <h2>Single Phase Meters</h2>
+            <div class="meter-grid-monophase" id="monophaseGrid"></div>
+        </div>
+
+        <div class="meter-section">
+            <h2>Three Phase Meters</h2>
+            <div class="meter-grid-threephase" id="threephaseGrid"></div>
+        </div>
     </div>
 
     <script>
@@ -332,19 +350,22 @@ async def root():
         }
 
         function renderMeters(meters) {
-            const grid = document.getElementById('meterGrid');
+            const monophaseGrid = document.getElementById('monophaseGrid');
+            const threephaseGrid = document.getElementById('threephaseGrid');
 
             if (!meters || Object.keys(meters).length === 0) {
-                grid.innerHTML = '<div class="no-data">No meter data available yet. Waiting for readings...</div>';
+                monophaseGrid.innerHTML = '<div class="no-data">No meter data available yet. Waiting for readings...</div>';
+                threephaseGrid.innerHTML = '';
                 return;
             }
 
-            grid.innerHTML = '';
+            monophaseGrid.innerHTML = '';
+            threephaseGrid.innerHTML = '';
 
             for (const [meterId, meter] of Object.entries(meters)) {
                 const card = document.createElement('div');
                 const isThreePhase = meter.meter_type === 'SDM630';
-                card.className = 'meter-card ' + (isThreePhase ? 'threephase' : 'monophase');
+                card.className = 'meter-card';
 
                 const tableHtml = isThreePhase
                     ? create3PhaseTable(meter.data)
@@ -359,7 +380,11 @@ async def root():
                     ${tableHtml}
                 `;
 
-                grid.appendChild(card);
+                if (isThreePhase) {
+                    threephaseGrid.appendChild(card);
+                } else {
+                    monophaseGrid.appendChild(card);
+                }
             }
 
             // Update timestamp
