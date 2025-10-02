@@ -199,6 +199,21 @@ async def root():
             return '';
         }
 
+        function getIcon(metric) {
+            if (metric.includes('Voltage')) return '⚡';
+            if (metric.includes('Current')) return '〰️';
+            if (metric.includes('Power') && !metric.includes('Apparent') && !metric.includes('Reactive')) return '🔌';
+            if (metric.includes('ApparentPower')) return '💫';
+            if (metric.includes('ReactivePower')) return '🔄';
+            if (metric.includes('Frequency')) return '📊';
+            if (metric.includes('Cosphi')) return '📐';
+            if (metric.includes('PhaseAngle')) return '∠';
+            if (metric.includes('Import')) return '📥';
+            if (metric.includes('Export')) return '📤';
+            if (metric.includes('Sum')) return '∑';
+            return '';
+        }
+
         function createPhaseTable(data, phase) {
             const metrics = ['Voltage', 'Current', 'Power', 'ApparentPower', 'ReactivePower', 'Cosphi', 'PhaseAngle'];
             let html = '';
@@ -230,9 +245,10 @@ async def root():
             for (const metric of metrics) {
                 if (data[metric] !== undefined) {
                     const unit = getUnit(metric);
+                    const icon = getIcon(metric);
                     html += `
                         <tr>
-                            <td class="metric-name">${metric}</td>
+                            <td class="metric-name">${icon} ${metric}</td>
                             <td class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
                         </tr>
                     `;
@@ -256,9 +272,10 @@ async def root():
 
                 if (l1 !== undefined || l2 !== undefined || l3 !== undefined) {
                     const unit = getUnit(metric);
+                    const icon = getIcon(metric);
                     html += `
                         <tr>
-                            <td class="metric-name">${metric}</td>
+                            <td class="metric-name">${icon} ${metric}</td>
                             <td class="metric-value">${formatValue(l1)} <span class="metric-unit">${unit}</span></td>
                             <td class="metric-value">${formatValue(l2)} <span class="metric-unit">${unit}</span></td>
                             <td class="metric-value">${formatValue(l3)} <span class="metric-unit">${unit}</span></td>
@@ -275,9 +292,10 @@ async def root():
             for (const metric of totals) {
                 if (data[metric] !== undefined) {
                     const unit = getUnit(metric);
+                    const icon = getIcon(metric);
                     html += `
                         <tr>
-                            <td class="metric-name">${metric}</td>
+                            <td class="metric-name">${icon} ${metric}</td>
                             <td colspan="3" class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
                         </tr>
                     `;
