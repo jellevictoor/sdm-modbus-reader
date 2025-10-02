@@ -144,14 +144,13 @@ async def root():
             color: #333;
             text-align: right;
             font-variant-numeric: tabular-nums;
+            white-space: nowrap;
         }
 
         .metric-unit {
             color: #999;
-            font-size: 0.85em;
-            display: inline-block;
-            width: 3em;
-            text-align: left;
+            font-size: 0.75em;
+            margin-left: 0.3em;
         }
 
         .error {
@@ -189,7 +188,10 @@ async def root():
     <script>
         function formatValue(value, decimals = 2) {
             if (value === null || value === undefined) return 'N/A';
-            return Number(value).toFixed(decimals);
+            const num = Number(value).toFixed(decimals);
+            const parts = num.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.join('.');
         }
 
         function getUnit(metric) {
