@@ -49,7 +49,7 @@ async def root():
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
@@ -79,6 +79,14 @@ async def root():
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .meter-card.monophase {
+            max-width: 275px;
+        }
+
+        .meter-card.threephase {
+            max-width: 500px;
         }
 
         .meter-header {
@@ -335,9 +343,10 @@ async def root():
 
             for (const [meterId, meter] of Object.entries(meters)) {
                 const card = document.createElement('div');
-                card.className = 'meter-card';
+                const isThreePhase = meter.meter_type === 'SDM630';
+                card.className = 'meter-card ' + (isThreePhase ? 'threephase' : 'monophase');
 
-                const tableHtml = meter.meter_type === 'SDM630'
+                const tableHtml = isThreePhase
                     ? create3PhaseTable(meter.data)
                     : createMonophaseTable(meter.data);
 
