@@ -23,7 +23,7 @@ services:
     command:
       - python
       - -m
-      - sdm_modbus_reader.sdm_modbus_reader
+      - sdm_modbus_reader
       - --device
       - "SDM630:100:Main Panel"
       - --device
