@@ -15,5 +15,8 @@ COPY sdm_modbus_reader ./sdm_modbus_reader
 # Install Python dependencies
 RUN pip install --no-cache-dir .
 
-# Run the script
-CMD ["python", "-m", "sdm_modbus_reader.sdm_modbus_reader"]
+# Expose the web interface port
+EXPOSE 8000
+
+# Run both the modbus reader and web API
+CMD ["python", "-m", "sdm_modbus_reader.run"]

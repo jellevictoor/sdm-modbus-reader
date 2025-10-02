@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 import struct
 import time
 from typing import Dict, Optional
+from .data_store import meter_store
 
 # Serial Configuration
 SERIAL_PORT = "/dev/ttyUSB0"
@@ -282,6 +283,9 @@ def main():
                     success_count += 1
                     total_registers += len(data)
                     print(f"✓ {len(data)} registers")
+
+                    # Store data for API access
+                    meter_store.update_meter(meter_id, meter_type, meter_name, data)
 
                     # Display summary
                     display_meter_summary(meter_id, meter_type, data)
