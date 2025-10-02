@@ -9,6 +9,8 @@ import struct
 import time
 import re
 import typer
+import threading
+import uvicorn
 from typing import Dict, Optional, List
 from typing_extensions import Annotated
 from .data_store import meter_store
@@ -289,6 +291,18 @@ def main(
         meter = parse_meter_spec(spec)
         meters[meter['address']] = meter
 
+    # Start API server in background thread
+    def run_api():
+        uvicorn.run(
+            "sdm_modbus_reader.api:app",
+            host="0.0.0.0",
+            port=api_port,
+            log_level="warning"
+        )
+
+    api_thread = threading.Thread(target=run_api, daemon=True)
+    api_thread.start()
+
     typer.echo("=" * 70)
     typer.echo("SDM Meter Reader - Full Metrics Edition")
     typer.echo("=" * 70)
@@ -299,6 +313,7 @@ def main(
         typer.echo(f"MQTT User: {mqtt_user}")
     typer.echo(f"MQTT Topic Prefix: {mqtt_topic_prefix}")
     typer.echo(f"Poll Interval: {poll_interval}s")
+    typer.echo(f"Web API: http://0.0.0.0:{api_port}")
     typer.echo()
     typer.echo("Configured Meters:")
     for address, meter in meters.items():

@@ -27,17 +27,17 @@ services:
       - --device
       - "SDM630:100:Main Panel"
       - --device
-      - SDM120:101:Kitchen
+      - "SDM120:101:Pv Inverter"
       - --device
-      - "SDM120:102:Living Room"
+      - "SDM120:102:Network"
       - --device
-      - "SDM120:103:Bedroom 1"
+      - "SDM120:103:small oven"
       - --device
-      - "SDM120:104:Bedroom 2"
+      - "SDM120:104:big oven"
       - --device
-      - SDM120:105:Office
+      - SDM120:105:heatpump
       - --device
-      - SDM120:106:Garage
+      - SDM120:106:bikes
       - --serial-port
       - /dev/ttyUSB0
       - --baudrate
