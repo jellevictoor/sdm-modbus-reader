@@ -71,7 +71,7 @@ async def root():
         .meter-grid {
             display: grid;
             gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
         }
 
         .meter-card {
@@ -118,6 +118,10 @@ async def root():
             font-weight: 600;
         }
 
+        th:not(:first-child) {
+            text-align: right;
+        }
+
         td {
             padding: 8px;
             border-bottom: 1px solid #eee;
@@ -139,11 +143,15 @@ async def root():
             font-weight: 600;
             color: #333;
             text-align: right;
+            font-variant-numeric: tabular-nums;
         }
 
         .metric-unit {
             color: #999;
             font-size: 0.85em;
+            display: inline-block;
+            width: 3em;
+            text-align: left;
         }
 
         .error {
