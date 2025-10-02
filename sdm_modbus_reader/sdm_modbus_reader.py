@@ -25,23 +25,28 @@ def slugify(text: str) -> str:
 
 
 def parse_meter_spec(spec: str) -> Dict:
-    """Parse meter specification in format: type:address:display_name"""
+    """Parse meter specification in format: type:address[:display_name]"""
     parts = spec.split(':', 2)
-    if len(parts) != 3:
-        raise typer.BadParameter(f"Invalid meter spec '{spec}'. Expected format: type:address:display_name")
+    if len(parts) < 2:
+        raise typer.BadParameter(f"Invalid meter spec '{spec}'. Expected format: type:address[:display_name]")
 
-    meter_type, address, display_name = parts
-    meter_type = meter_type.upper()
+    meter_type = parts[0].upper()
+    address_str = parts[1]
+    display_name = parts[2] if len(parts) == 3 else None
 
     if meter_type not in ['SDM120', 'SDM220', 'SDM230', 'SDM630']:
         raise typer.BadParameter(f"Invalid meter type '{meter_type}'. Must be one of: SDM120, SDM220, SDM230, SDM630")
 
     try:
-        address = int(address)
+        address = int(address_str)
         if not (1 <= address <= 247):
             raise typer.BadParameter(f"Address must be between 1 and 247, got {address}")
     except ValueError as e:
-        raise typer.BadParameter(f"Invalid address '{address}': {e}")
+        raise typer.BadParameter(f"Invalid address '{address_str}': {e}")
+
+    # If no display name provided, use meter_type + address
+    if display_name is None:
+        display_name = f"{meter_type} {address}"
 
     return {
         "type": meter_type,
@@ -236,8 +241,8 @@ def display_meter_summary(meter_id: int, meter_type: str, data: Dict):
 def main(
     devices: Annotated[List[str], typer.Option(
         "--device", "-d",
-        help="Meter specification (TYPE:ADDRESS:NAME, e.g., SDM120:101:Kitchen)",
-        metavar="TYPE:ADDR:NAME"
+        help="Meter specification (TYPE:ADDRESS[:NAME], e.g., SDM120:101 or SDM120:101:Kitchen)",
+        metavar="TYPE:ADDR[:NAME]"
     )],
     # Serial configuration
     serial_port: Annotated[str, typer.Option(help="Serial port device")] = "/dev/ttyUSB0",
