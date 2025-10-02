@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   sdm-reader:
     build: .
@@ -21,22 +19,37 @@ services:
     environment:
       - TZ=Europe/Brussels
 
-    # Command with all configuration
-    command: >
-      python -m sdm_modbus_reader.sdm_modbus_reader
-      --device SDM630:100:Main Panel
-      --device SDM120:101:Kitchen
-      --device SDM120:102:Living Room
-      --device SDM120:103:Bedroom 1
-      --device SDM120:104:Bedroom 2
-      --device SDM120:105:Office
-      --device SDM120:106:Garage
-      --serial-port /dev/ttyUSB0
-      --baudrate 9600
-      --mqtt-broker 192.168.1.5
-      --mqtt-port 1883
-      --mqtt-topic-prefix klskmp/metering/sdm
-      --poll-interval 10
+    # Command with all configuration (use array format for proper quoting)
+    command:
+      - python
+      - -m
+      - sdm_modbus_reader.sdm_modbus_reader
+      - --device
+      - "SDM630:100:Main Panel"
+      - --device
+      - SDM120:101:Kitchen
+      - --device
+      - "SDM120:102:Living Room"
+      - --device
+      - "SDM120:103:Bedroom 1"
+      - --device
+      - "SDM120:104:Bedroom 2"
+      - --device
+      - SDM120:105:Office
+      - --device
+      - SDM120:106:Garage
+      - --serial-port
+      - /dev/ttyUSB0
+      - --baudrate
+      - "9600"
+      - --mqtt-broker
+      - 192.168.1.5
+      - --mqtt-port
+      - "1883"
+      - --mqtt-topic-prefix
+      - klskmp/metering/sdm
+      - --poll-interval
+      - "10"
 
     # Logging
     logging:
