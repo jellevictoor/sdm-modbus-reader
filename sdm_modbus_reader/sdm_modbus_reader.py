@@ -11,19 +11,21 @@ from typing import Dict, Optional
 from .data_store import meter_store
 
 # Serial Configuration
-SERIAL_PORT = "/dev/ttyUSB0"
-BAUDRATE = 9600
-PARITY = 'N'
-STOPBITS = 1
-BYTESIZE = 8
+import os
+
+SERIAL_PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
+BAUDRATE = int(os.getenv("BAUDRATE", "9600"))
+PARITY = os.getenv("PARITY", "N")
+STOPBITS = int(os.getenv("STOPBITS", "1"))
+BYTESIZE = int(os.getenv("BYTESIZE", "8"))
 
 # MQTT Configuration
-MQTT_BROKER = "192.168.1.5"
-MQTT_PORT = 1883
-MQTT_TOPIC_PREFIX = "klskmp/metering/sdm"
+MQTT_BROKER = os.getenv("MQTT_BROKER", "192.168.1.5")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_TOPIC_PREFIX = os.getenv("MQTT_TOPIC_PREFIX", "klskmp/metering/sdm")
 
 # Poll interval in seconds
-POLL_INTERVAL = 10
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "10"))
 
 # Meter Configuration
 METERS = {
@@ -144,7 +146,7 @@ def read_float32(client, device_id: int, register: int) -> Optional[float]:
         result = client.read_input_registers(
             address=register,
             count=2,
-            slave=device_id
+            device_id=device_id  # Changed to 'device_id' for pymodbus 3.11.x
         )
 
         if result.isError():

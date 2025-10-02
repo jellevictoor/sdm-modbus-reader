@@ -8,6 +8,9 @@ RUN apt-get update && \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
+# Add user to dialout group for serial port access
+RUN usermod -a -G dialout root
+
 # Copy project files
 COPY pyproject.toml uv.lock* ./
 COPY sdm_modbus_reader ./sdm_modbus_reader
