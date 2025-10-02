@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  sdm-reader:
+    build: .
+    container_name: sdm-modbus-reader
+    restart: unless-stopped
+
+    # Device access for serial port
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+
+    # Ports
+    ports:
+      - "8000:8000"  # Web UI
+
+    # Environment variables
+    environment:
+      - TZ=Europe/Brussels
+      # Optional: Set via environment if you prefer
+      - MQTT_USER=${MQTT_USER:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+
+    # Command with all configuration
+    command: >
+      python -m sdm_modbus_reader.sdm_modbus_reader
+      --device SDM630:100:"Main Panel"
+      --device SDM120:101:Kitchen
+      --device SDM120:102:"Living Room"
+      --device SDM120:103:"Bedroom 1"
+      --device SDM120:104:"Bedroom 2"
+      --device SDM120:105:Office
+      --device SDM120:106:Garage
+      --serial-port /dev/ttyUSB0
+      --baudrate 9600
+      --mqtt-broker ${MQTT_BROKER:-192.168.1.5}
+      --mqtt-port ${MQTT_PORT:-1883}
+      --mqtt-user ${MQTT_USER:-}
+      --mqtt-password ${MQTT_PASSWORD:-}
+      --mqtt-topic-prefix ${MQTT_TOPIC_PREFIX:-klskmp/metering/sdm}
+      --poll-interval ${POLL_INTERVAL:-10}
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/meters || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Include MQTT broker for local testing
+  # mosquitto:
+  #   image: eclipse-mosquitto:latest
+  #   container_name: mqtt-broker
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1883:1883"
+  #     - "9001:9001"
+  #   volumes:
+  #     - ./mosquitto/config:/mosquitto/config
+  #     - ./mosquitto/data:/mosquitto/data
+  #     - ./mosquitto/log:/mosquitto/log

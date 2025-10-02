@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  sdm-reader:
+    build: .
+    container_name: sdm-modbus-reader
+    restart: unless-stopped
+
+    # Device access for serial port
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+
+    # Privileged mode for serial port access (alternative to devices)
+    # privileged: true
+
+    # Ports
+    ports:
+      - "8000:8000"  # Web UI
+
+    # Environment variables (optional - can use command args instead)
+    environment:
+      - TZ=Europe/Brussels
+
+    # Command with all configuration
+    command: >
+      python -m sdm_modbus_reader.sdm_modbus_reader
+      --device SDM630:100:Main Panel
+      --device SDM120:101:Kitchen
+      --device SDM120:102:Living Room
+      --device SDM120:103:Bedroom 1
+      --device SDM120:104:Bedroom 2
+      --device SDM120:105:Office
+      --device SDM120:106:Garage
+      --serial-port /dev/ttyUSB0
+      --baudrate 9600
+      --mqtt-broker 192.168.1.5
+      --mqtt-port 1883
+      --mqtt-topic-prefix klskmp/metering/sdm
+      --poll-interval 10
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Network
+    network_mode: bridge
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/meters"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
