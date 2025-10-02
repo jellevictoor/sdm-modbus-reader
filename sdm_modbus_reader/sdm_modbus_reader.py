@@ -7,36 +7,48 @@ from pymodbus.client import ModbusSerialClient
 import paho.mqtt.client as mqtt
 import struct
 import time
-from typing import Dict, Optional
+import re
+import typer
+from typing import Dict, Optional, List
+from typing_extensions import Annotated
 from .data_store import meter_store
 
-# Serial Configuration
-import os
+app = typer.Typer(help="SDM Modbus Meter Reader - Monitor SDM120/SDM630 energy meters")
 
-SERIAL_PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
-BAUDRATE = int(os.getenv("BAUDRATE", "9600"))
-PARITY = os.getenv("PARITY", "N")
-STOPBITS = int(os.getenv("STOPBITS", "1"))
-BYTESIZE = int(os.getenv("BYTESIZE", "8"))
 
-# MQTT Configuration
-MQTT_BROKER = os.getenv("MQTT_BROKER", "192.168.1.5")
-MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_TOPIC_PREFIX = os.getenv("MQTT_TOPIC_PREFIX", "klskmp/metering/sdm")
+def slugify(text: str) -> str:
+    """Convert text to a URL-safe slug"""
+    text = text.lower()
+    text = re.sub(r'[^\w\s-]', '', text)
+    text = re.sub(r'[-\s]+', '-', text)
+    return text.strip('-')
 
-# Poll interval in seconds
-POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "10"))
 
-# Meter Configuration
-METERS = {
-    100: {"type": "SDM630", "name": "sdm630_main"},
-    101: {"type": "SDM120", "name": "sdm120_101"},
-    102: {"type": "SDM120", "name": "sdm120_102"},
-    103: {"type": "SDM120", "name": "sdm120_103"},
-    104: {"type": "SDM120", "name": "sdm120_104"},
-    105: {"type": "SDM120", "name": "sdm120_105"},
-    106: {"type": "SDM120", "name": "sdm120_106"},
-}
+def parse_meter_spec(spec: str) -> Dict:
+    """Parse meter specification in format: type:address:display_name"""
+    parts = spec.split(':', 2)
+    if len(parts) != 3:
+        raise typer.BadParameter(f"Invalid meter spec '{spec}'. Expected format: type:address:display_name")
+
+    meter_type, address, display_name = parts
+    meter_type = meter_type.upper()
+
+    if meter_type not in ['SDM120', 'SDM220', 'SDM230', 'SDM630']:
+        raise typer.BadParameter(f"Invalid meter type '{meter_type}'. Must be one of: SDM120, SDM220, SDM230, SDM630")
+
+    try:
+        address = int(address)
+        if not (1 <= address <= 247):
+            raise typer.BadParameter(f"Address must be between 1 and 247, got {address}")
+    except ValueError as e:
+        raise typer.BadParameter(f"Invalid address '{address}': {e}")
+
+    return {
+        "type": meter_type,
+        "address": address,
+        "display_name": display_name,
+        "slug": slugify(display_name)
+    }
 
 # Complete register maps
 SDM120_REGISTERS = {
@@ -187,9 +199,9 @@ def read_meter(client, device_id: int, meter_type: str) -> Optional[Dict]:
 
     return data if success_count > 0 else None
 
-def publish_data(mqtt_client, meter_id: int, meter_name: str, data: Dict):
+def publish_data(mqtt_client, meter_slug: str, data: Dict, topic_prefix: str):
     """Publish meter data to MQTT in mbmd-compatible format"""
-    base_topic = f"{MQTT_TOPIC_PREFIX}/{meter_name}"
+    base_topic = f"{topic_prefix}/{meter_slug}"
 
     for key, value in data.items():
         topic = f"{base_topic}/{key}"
@@ -220,111 +232,171 @@ def display_meter_summary(meter_id: int, meter_type: str, data: Dict):
         energy = data.get('Sum', 0)
         print(f"  V={voltage:.1f}V, I={current:.2f}A, P={power:.0f}W, PF={pf:.3f}, Energy={energy:.1f}kWh")
 
-def main():
-    print("=" * 70)
-    print("SDM Meter Reader - Full Metrics Edition")
-    print("=" * 70)
-    print(f"Serial Port: {SERIAL_PORT}")
-    print(f"Baud Rate: {BAUDRATE}")
-    print(f"MQTT Broker: {MQTT_BROKER}:{MQTT_PORT}")
-    print(f"Poll Interval: {POLL_INTERVAL}s")
-    print()
-    print("Configured Meters:")
-    for meter_id, config in METERS.items():
-        print(f"  ID {meter_id}: {config['type']:7s} → {config['name']}")
-    print("=" * 70)
-    print()
+@app.command()
+def main(
+    devices: Annotated[List[str], typer.Option(
+        "--device", "-d",
+        help="Meter specification (TYPE:ADDRESS:NAME, e.g., SDM120:101:Kitchen)",
+        metavar="TYPE:ADDR:NAME"
+    )],
+    # Serial configuration
+    serial_port: Annotated[str, typer.Option(help="Serial port device")] = "/dev/ttyUSB0",
+    baudrate: Annotated[int, typer.Option(help="Serial baudrate")] = 9600,
+    parity: Annotated[str, typer.Option(help="Serial parity (N/E/O)")] = "N",
+    stopbits: Annotated[int, typer.Option(help="Serial stop bits")] = 1,
+    bytesize: Annotated[int, typer.Option(help="Serial byte size")] = 8,
+    # MQTT configuration
+    mqtt_broker: Annotated[str, typer.Option(help="MQTT broker hostname or IP")] = "localhost",
+    mqtt_port: Annotated[int, typer.Option(help="MQTT broker port")] = 1883,
+    mqtt_user: Annotated[Optional[str], typer.Option(help="MQTT username")] = None,
+    mqtt_password: Annotated[Optional[str], typer.Option(help="MQTT password")] = None,
+    mqtt_topic_prefix: Annotated[str, typer.Option(help="MQTT topic prefix")] = "home/energy/sdm",
+    # Other options
+    poll_interval: Annotated[int, typer.Option(help="Poll interval in seconds")] = 10,
+    api_port: Annotated[int, typer.Option(help="Web API port")] = 8000,
+):
+    """
+    SDM Modbus Meter Reader - Monitor SDM120/SDM630 energy meters.
+
+    Examples:
+
+        sdm-reader --device SDM120:101:Kitchen --device SDM630:100:"Main Panel"
+
+        sdm-reader -d SDM120:101:Kitchen --mqtt-broker 192.168.1.5 --mqtt-user admin
+    """
+    # Validate parity
+    if parity not in ['N', 'E', 'O']:
+        typer.echo("Error: Parity must be N, E, or O", err=True)
+        raise typer.Exit(1)
+
+    # Validate stopbits and bytesize
+    if stopbits not in [1, 2]:
+        typer.echo("Error: Stopbits must be 1 or 2", err=True)
+        raise typer.Exit(1)
+
+    if bytesize not in [7, 8]:
+        typer.echo("Error: Bytesize must be 7 or 8", err=True)
+        raise typer.Exit(1)
+
+    # Parse meter specifications
+    meters = {}
+    for spec in devices:
+        meter = parse_meter_spec(spec)
+        meters[meter['address']] = meter
+
+    typer.echo("=" * 70)
+    typer.echo("SDM Meter Reader - Full Metrics Edition")
+    typer.echo("=" * 70)
+    typer.echo(f"Serial Port: {serial_port}")
+    typer.echo(f"Baud Rate: {baudrate}")
+    typer.echo(f"MQTT Broker: {mqtt_broker}:{mqtt_port}")
+    if mqtt_user:
+        typer.echo(f"MQTT User: {mqtt_user}")
+    typer.echo(f"MQTT Topic Prefix: {mqtt_topic_prefix}")
+    typer.echo(f"Poll Interval: {poll_interval}s")
+    typer.echo()
+    typer.echo("Configured Meters:")
+    for address, meter in meters.items():
+        typer.echo(f"  Address {address}: {meter['type']:7s} → {meter['display_name']} (slug: {meter['slug']})")
+    typer.echo("=" * 70)
+    typer.echo()
 
     # Connect to MQTT
     mqtt_client = mqtt.Client(client_id="sdm_reader")
+    if mqtt_user and mqtt_password:
+        mqtt_client.username_pw_set(mqtt_user, mqtt_password)
+
     try:
-        mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
+        mqtt_client.connect(mqtt_broker, mqtt_port, 60)
         mqtt_client.loop_start()
-        print("✓ Connected to MQTT broker")
+        typer.echo("✓ Connected to MQTT broker")
     except Exception as e:
-        print(f"✗ Failed to connect to MQTT: {e}")
-        print("  Continuing without MQTT...")
+        typer.echo(f"✗ Failed to connect to MQTT: {e}")
+        typer.echo("  Continuing without MQTT...")
         mqtt_client = None
 
     # Connect to Modbus Serial
     serial_client = ModbusSerialClient(
-        port=SERIAL_PORT,
-        baudrate=BAUDRATE,
-        parity=PARITY,
-        stopbits=STOPBITS,
-        bytesize=BYTESIZE,
+        port=serial_port,
+        baudrate=baudrate,
+        parity=parity,
+        stopbits=stopbits,
+        bytesize=bytesize,
         timeout=1
     )
 
     try:
         if not serial_client.connect():
-            print("✗ Failed to open serial port")
-            return
-        print(f"✓ Opened serial port {SERIAL_PORT}\n")
+            typer.echo("✗ Failed to open serial port", err=True)
+            raise typer.Exit(1)
+        typer.echo(f"✓ Opened serial port {serial_port}\n")
 
         cycle = 0
         while True:
             cycle += 1
             cycle_start = time.time()
-            print(f"[Cycle {cycle}] {time.strftime('%H:%M:%S')}")
-            print("-" * 70)
+            typer.echo(f"[Cycle {cycle}] {time.strftime('%H:%M:%S')}")
+            typer.echo("-" * 70)
 
             success_count = 0
             error_count = 0
             total_registers = 0
 
-            for meter_id, config in METERS.items():
-                meter_type = config["type"]
-                meter_name = config["name"]
+            for address, meter in meters.items():
+                meter_type = meter["type"]
+                display_name = meter["display_name"]
+                slug = meter["slug"]
 
-                print(f"Reading {meter_type} (ID {meter_id})... ", end="", flush=True)
+                typer.echo(f"Reading {meter_type} @ {address} ({display_name})... ", nl=False)
 
-                data = read_meter(serial_client, meter_id, meter_type)
+                data = read_meter(serial_client, address, meter_type)
 
                 if data:
                     success_count += 1
                     total_registers += len(data)
-                    print(f"✓ {len(data)} registers")
+                    typer.echo(f"✓ {len(data)} registers")
 
                     # Store data for API access
-                    meter_store.update_meter(meter_id, meter_type, meter_name, data)
+                    meter_store.update_meter(address, meter_type, display_name, data)
 
                     # Display summary
-                    display_meter_summary(meter_id, meter_type, data)
+                    display_meter_summary(address, meter_type, data)
 
                     # Publish to MQTT
                     if mqtt_client:
-                        publish_data(mqtt_client, meter_id, meter_name, data)
+                        publish_data(mqtt_client, slug, data, mqtt_topic_prefix)
                 else:
                     error_count += 1
-                    print(f"✗ TIMEOUT/ERROR")
+                    typer.echo(f"✗ TIMEOUT/ERROR")
 
                 # Delay between meters
                 time.sleep(0.5)
 
             cycle_time = time.time() - cycle_start
-            print("-" * 70)
-            print(f"Summary: {success_count}/{len(METERS)} meters OK, "
+            typer.echo("-" * 70)
+            typer.echo(f"Summary: {success_count}/{len(meters)} meters OK, "
                   f"{total_registers} registers read, {cycle_time:.1f}s")
-            print()
+            typer.echo()
 
             # Wait for next cycle
-            remaining = POLL_INTERVAL - cycle_time
+            remaining = poll_interval - cycle_time
             if remaining > 0:
                 time.sleep(remaining)
 
     except KeyboardInterrupt:
-        print("\n\nStopping...")
+        typer.echo("\n\nStopping...")
     except Exception as e:
-        print(f"\n✗ Unexpected error: {e}")
+        typer.echo(f"\n✗ Unexpected error: {e}", err=True)
         import traceback
         traceback.print_exc()
+        raise typer.Exit(1)
     finally:
         serial_client.close()
         if mqtt_client:
             mqtt_client.loop_stop()
             mqtt_client.disconnect()
-        print("Disconnected")
+        typer.echo("Disconnected")
+
 
 if __name__ == "__main__":
-    main()
+    app()
