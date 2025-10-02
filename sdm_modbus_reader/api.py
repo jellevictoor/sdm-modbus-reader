@@ -244,25 +244,33 @@ async def root():
         }
 
         function create3PhaseTable(data) {
-            let html = '<table>';
+            const metrics = ['Voltage', 'Current', 'Power', 'ApparentPower', 'ReactivePower', 'Cosphi', 'PhaseAngle'];
 
-            // Phase L1
-            html += '<thead><tr><th colspan="2" class="phase-header">Phase L1</th></tr></thead><tbody>';
-            html += createPhaseTable(data, 'L1');
+            let html = '<table><thead><tr><th>Metric</th><th>L1</th><th>L2</th><th>L3</th></tr></thead><tbody>';
+
+            // Phase-specific metrics in compact format
+            for (const metric of metrics) {
+                const l1 = data[`${metric}/L1`];
+                const l2 = data[`${metric}/L2`];
+                const l3 = data[`${metric}/L3`];
+
+                if (l1 !== undefined || l2 !== undefined || l3 !== undefined) {
+                    const unit = getUnit(metric);
+                    html += `
+                        <tr>
+                            <td class="metric-name">${metric}</td>
+                            <td class="metric-value">${formatValue(l1)} <span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value">${formatValue(l2)} <span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value">${formatValue(l3)} <span class="metric-unit">${unit}</span></td>
+                        </tr>
+                    `;
+                }
+            }
+
             html += '</tbody>';
 
-            // Phase L2
-            html += '<thead><tr><th colspan="2" class="phase-header">Phase L2</th></tr></thead><tbody>';
-            html += createPhaseTable(data, 'L2');
-            html += '</tbody>';
-
-            // Phase L3
-            html += '<thead><tr><th colspan="2" class="phase-header">Phase L3</th></tr></thead><tbody>';
-            html += createPhaseTable(data, 'L3');
-            html += '</tbody>';
-
-            // Totals
-            html += '<thead><tr><th colspan="2" class="phase-header">Total / Average</th></tr></thead><tbody>';
+            // Totals section
+            html += '<thead><tr><th colspan="4" class="phase-header">Total / Average</th></tr></thead><tbody>';
             const totals = ['Voltage', 'Current', 'Power', 'ApparentPower', 'ReactivePower', 'Cosphi', 'Frequency', 'Import', 'Export', 'Sum'];
             for (const metric of totals) {
                 if (data[metric] !== undefined) {
@@ -270,7 +278,7 @@ async def root():
                     html += `
                         <tr>
                             <td class="metric-name">${metric}</td>
-                            <td class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
+                            <td colspan="3" class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
                         </tr>
                     `;
                 }
