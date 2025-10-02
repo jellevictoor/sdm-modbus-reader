@@ -10,7 +10,6 @@ from .sdm_modbus_reader import app as typer_app
 
 def run_reader():
     """Run the modbus reader in a thread"""
-    # Typer app expects sys.argv to be set
     typer_app()
 
 

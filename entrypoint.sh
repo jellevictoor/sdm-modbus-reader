@@ -2,4 +2,5 @@
 set -e
 
 # Run both the reader and API with all passed arguments
-exec python -m sdm_modbus_reader.run "$@"
+# Use -c to avoid -m being in sys.argv
+exec python -c "from sdm_modbus_reader.run import main; main()" "$@"
