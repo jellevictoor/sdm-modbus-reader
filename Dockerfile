@@ -16,10 +16,6 @@ RUN usermod -a -G dialout root
 COPY pyproject.toml uv.lock* ./
 COPY README.md ./
 COPY sdm_modbus_reader ./sdm_modbus_reader
-COPY entrypoint.sh ./
-
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
 
 # Install Python dependencies
 RUN pip install --no-cache-dir .
@@ -27,8 +23,8 @@ RUN pip install --no-cache-dir .
 # Expose the web interface port
 EXPOSE 8000
 
-# Use entrypoint to pass arguments correctly
-ENTRYPOINT ["./entrypoint.sh"]
+# Use sdm-reader as entrypoint
+ENTRYPOINT ["sdm-reader"]
 
 # Default arguments (can be overridden in docker-compose)
 CMD []

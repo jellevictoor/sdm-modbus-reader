@@ -1,6 +1,6 @@
 services:
   sdm-reader:
-    build: .
+    image: ghcr.io/jellevictoor/sdm-modbus-reader:latest
     container_name: sdm-modbus-reader
     restart: unless-stopped
 
