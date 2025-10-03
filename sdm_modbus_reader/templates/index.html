@@ -132,12 +132,23 @@
             text-align: right;
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
+            display: flex;
+            align-items: baseline;
+            justify-content: flex-end;
+        }
+
+        .metric-number {
+            text-align: right;
         }
 
         .metric-unit {
             color: #999;
             font-size: 0.75em;
+            display: inline-block;
+            width: 4ch;
+            text-align: left;
             margin-left: 0.3em;
+            flex-shrink: 0;
         }
 
         .error {
@@ -231,7 +242,7 @@
                     html += `
                         <tr>
                             <td class="metric-name">${metric}</td>
-                            <td class="metric-value">${formatValue(data[key])} <span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value"><span class="metric-number">${formatValue(data[key])}</span><span class="metric-unit">${unit}</span></td>
                         </tr>
                     `;
                 }
@@ -256,7 +267,7 @@
                     html += `
                         <tr>
                             <td class="metric-name">${icon} ${metric}</td>
-                            <td class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value"><span class="metric-number">${formatValue(data[metric])}</span><span class="metric-unit">${unit}</span></td>
                         </tr>
                     `;
                 }
@@ -275,7 +286,7 @@
                         html += `
                             <tr>
                                 <td class="metric-name">${icon} ${metric}</td>
-                                <td class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
+                                <td class="metric-value"><span class="metric-number">${formatValue(data[metric])}</span><span class="metric-unit">${unit}</span></td>
                             </tr>
                         `;
                     }
@@ -305,10 +316,10 @@
                     html += `
                         <tr>
                             <td class="metric-name">${icon} ${metric}</td>
-                            <td class="metric-value">${formatValue(l1)} <span class="metric-unit">${unit}</span></td>
-                            <td class="metric-value">${formatValue(l2)} <span class="metric-unit">${unit}</span></td>
-                            <td class="metric-value">${formatValue(l3)} <span class="metric-unit">${unit}</span></td>
-                            <td class="metric-value">${total !== undefined ? formatValue(total) + ' <span class="metric-unit">' + unit + '</span>' : ''}</td>
+                            <td class="metric-value"><span class="metric-number">${formatValue(l1)}</span><span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value"><span class="metric-number">${formatValue(l2)}</span><span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value"><span class="metric-number">${formatValue(l3)}</span><span class="metric-unit">${unit}</span></td>
+                            <td class="metric-value">${total !== undefined ? '<span class="metric-number">' + formatValue(total) + '</span><span class="metric-unit">' + unit + '</span>' : ''}</td>
                         </tr>
                     `;
                 }
@@ -329,7 +340,7 @@
                         html += `
                             <tr>
                                 <td class="metric-name">${icon} ${metric}</td>
-                                <td colspan="4" class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
+                                <td colspan="4" class="metric-value"><span class="metric-number">${formatValue(data[metric])}</span><span class="metric-unit">${unit}</span></td>
                             </tr>
                         `;
                     }
