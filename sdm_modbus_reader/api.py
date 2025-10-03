@@ -288,8 +288,9 @@ async def root():
         function createMonophaseTable(data) {
             const metrics = [
                 'Voltage', 'Current', 'Power', 'ApparentPower', 'ReactivePower',
-                'Cosphi', 'PhaseAngle', 'Frequency', 'Import', 'Export', 'Sum'
+                'Cosphi', 'PhaseAngle', 'Frequency'
             ];
+            const energyMetrics = ['Import', 'Export', 'Sum'];
 
             let html = '<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
 
@@ -306,7 +307,28 @@ async def root():
                 }
             }
 
-            html += '</tbody></table>';
+            html += '</tbody>';
+
+            // Energy section with blue header separator
+            const hasEnergy = energyMetrics.some(m => data[m] !== undefined);
+            if (hasEnergy) {
+                html += '<thead><tr><th colspan="2" class="phase-header">Energy</th></tr></thead><tbody>';
+                for (const metric of energyMetrics) {
+                    if (data[metric] !== undefined) {
+                        const unit = getUnit(metric);
+                        const icon = getIcon(metric);
+                        html += `
+                            <tr>
+                                <td class="metric-name">${icon} ${metric}</td>
+                                <td class="metric-value">${formatValue(data[metric])} <span class="metric-unit">${unit}</span></td>
+                            </tr>
+                        `;
+                    }
+                }
+                html += '</tbody>';
+            }
+
+            html += '</table>';
             return html;
         }
 
