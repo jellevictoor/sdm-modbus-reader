@@ -14,6 +14,7 @@ RUN usermod -a -G dialout root
 
 # Copy project files
 COPY pyproject.toml uv.lock* ./
+COPY README.md ./
 COPY sdm_modbus_reader ./sdm_modbus_reader
 COPY entrypoint.sh ./
 
