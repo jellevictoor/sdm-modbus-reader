@@ -19,6 +19,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --extra test
+
+      - name: Run tests
+        run: uv run pytest
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
