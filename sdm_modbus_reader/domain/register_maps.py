@@ -50,13 +50,13 @@ SDM630_REGISTERS = {
     "PhaseAngle/L1": 0x0024,
     "PhaseAngle/L2": 0x0026,
     "PhaseAngle/L3": 0x0028,
-    "Frequency": 0x0046,
-    "Import": 0x0156,
-    "Export": 0x0160,
-    "ReactiveImport": 0x0158,
-    "ReactiveExport": 0x0162,
-    "Sum": 0x0156,
-    "ReactiveSum": 0x0158,
+    "Frequency": 0x0046,        # 30071
+    "Import": 0x0048,           # 30073 - Total Import kWh
+    "Export": 0x004A,           # 30075 - Total Export kWh
+    "ReactiveImport": 0x004C,   # 30077 - Total Import kVArh
+    "ReactiveExport": 0x004E,   # 30079 - Total Export kVArh
+    "Sum": 0x0156,              # 30343 - Total kwh
+    "ReactiveSum": 0x0158,      # 30345 - Total kvarh
     "Voltage/L1-L2": 0x00C8,
     "Voltage/L2-L3": 0x00CA,
     "Voltage/L3-L1": 0x00CC,
