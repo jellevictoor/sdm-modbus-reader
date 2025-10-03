@@ -48,7 +48,9 @@ class MQTTPublisher(MessagePublisher):
         for key, value in data.items():
             topic = f"{base_topic}/{key}"
             # Format based on magnitude
-            if abs(value) >= 100:
+            if value == 0:
+                formatted = "0.0"
+            elif abs(value) >= 100:
                 formatted = f"{value:.2f}"
             elif abs(value) >= 1:
                 formatted = f"{value:.3f}"

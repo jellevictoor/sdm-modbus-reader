@@ -217,6 +217,17 @@ class TestMQTTPublisherAdapter:
 
         assert payload == "0.123457"
 
+    def test_formats_zero_values_as_zero_point_zero(self, mqtt_publisher, mqtt_subscriber):
+        """Verify zero values are formatted as 0.0"""
+        data = {"Power": 0.0}
+
+        mqtt_publisher.publish_meter_data("test", data)
+
+        mqtt_subscriber.wait_for_messages(1, timeout=3.0)
+        payload, _ = mqtt_subscriber.get_message("test/meters/test/Power")
+
+        assert payload == "0.0"
+
     def test_publishes_with_retain_flag(self, mqtt_broker):
         """Verify messages are published with retain flag set"""
         host, port = mqtt_broker
