@@ -51,7 +51,6 @@ class MeterService:
         # Store reading
         self.reading_repository.save(reading)
 
-        # Publish to MQTT if available
         if self.message_publisher:
             self.message_publisher.publish_meter_data(meter_config.slug, data)
 

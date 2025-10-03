@@ -11,10 +11,11 @@ from typing import List, Optional
 from typing_extensions import Annotated
 
 from sdm_modbus_reader.domain.models import MeterConfig, MeterType
-from sdm_modbus_reader.adapters.modbus_reader import ModbusMeterReader
-from sdm_modbus_reader.adapters.mqtt_publisher import MQTTPublisher
-from sdm_modbus_reader.adapters.memory_repository import InMemoryReadingRepository
-from sdm_modbus_reader.application.meter_service import MeterService
+from sdm_modbus_reader.bootstrap import (
+    bootstrap_application,
+    SerialConfig,
+    MqttConfig,
+)
 
 app = typer.Typer(help="SDM Modbus Meter Reader - Monitor SDM120/SDM630 energy meters")
 
@@ -130,8 +131,8 @@ def main(
         meter = parse_meter_spec(spec)
         meters[meter.address] = meter
 
-    # Initialize adapters
-    modbus_reader = ModbusMeterReader(
+    # Bootstrap application - initialize all dependencies
+    serial_config = SerialConfig(
         port=serial_port,
         baudrate=baudrate,
         parity=parity,
@@ -139,15 +140,9 @@ def main(
         bytesize=bytesize
     )
 
-    repository = InMemoryReadingRepository()
-
-    # Set repository for API
-    from sdm_modbus_reader.api import set_repository
-    set_repository(repository)
-
-    mqtt_publisher = None
+    mqtt_config = None
     if mqtt_broker:
-        mqtt_publisher = MQTTPublisher(
+        mqtt_config = MqttConfig(
             broker=mqtt_broker,
             port=mqtt_port,
             username=mqtt_user,
@@ -155,12 +150,7 @@ def main(
             topic_prefix=mqtt_topic_prefix
         )
 
-    # Initialize application service
-    meter_service = MeterService(
-        meter_reader=modbus_reader,
-        reading_repository=repository,
-        message_publisher=mqtt_publisher
-    )
+    container = bootstrap_application(serial_config, mqtt_config)
 
     # Start API server in background thread
     def run_api():
@@ -193,16 +183,16 @@ def main(
     typer.echo()
 
     # Connect to MQTT
-    if mqtt_publisher:
-        if mqtt_publisher.connect():
+    if container.message_publisher:
+        if container.message_publisher.connect():
             typer.echo("✓ Connected to MQTT broker")
         else:
             typer.echo("✗ Failed to connect to MQTT")
             typer.echo("  Continuing without MQTT...")
-            mqtt_publisher = None
+            container.message_publisher = None
 
     try:
-        if not modbus_reader.connect():
+        if not container.meter_reader.connect():
             typer.echo("✗ Failed to open serial port", err=True)
             raise typer.Exit(1)
         typer.echo(f"✓ Opened serial port {serial_port}\n")
@@ -221,7 +211,7 @@ def main(
             for address, meter in meters.items():
                 typer.echo(f"Reading {meter.meter_type.value} @ {address} ({meter.display_name})... ", nl=False)
 
-                reading = meter_service.read_and_store_meter(meter)
+                reading = container.meter_service.read_and_store_meter(meter)
 
                 if reading:
                     success_count += 1
@@ -256,9 +246,9 @@ def main(
         traceback.print_exc()
         raise typer.Exit(1)
     finally:
-        modbus_reader.disconnect()
-        if mqtt_publisher:
-            mqtt_publisher.disconnect()
+        container.meter_reader.disconnect()
+        if container.message_publisher:
+            container.message_publisher.disconnect()
         typer.echo("Disconnected")
 
 
