@@ -37,7 +37,7 @@ def parse_meter_spec(spec: str) -> MeterConfig:
     address_str = parts[1]
     display_name = parts[2] if len(parts) == 3 else None
 
-    if meter_type_str not in ['SDM120', 'SDM220', 'SDM230', 'SDM630']:
+    if meter_type_str not in ['SDM120', 'SDM630']:
         raise typer.BadParameter(f"Invalid meter type '{meter_type_str}'. Must be one of: SDM120, SDM220, SDM230, SDM630")
 
     try:

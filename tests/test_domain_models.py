@@ -14,14 +14,6 @@ class TestMeterType:
         """Test that SDM120 meter type has correct value"""
         assert MeterType.SDM120.value == "SDM120"
 
-    def test_sdm220_has_correct_value(self):
-        """Test that SDM220 meter type has correct value"""
-        assert MeterType.SDM220.value == "SDM220"
-
-    def test_sdm230_has_correct_value(self):
-        """Test that SDM230 meter type has correct value"""
-        assert MeterType.SDM230.value == "SDM230"
-
     def test_sdm630_has_correct_value(self):
         """Test that SDM630 meter type has correct value"""
         assert MeterType.SDM630.value == "SDM630"
