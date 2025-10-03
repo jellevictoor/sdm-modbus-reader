@@ -132,13 +132,12 @@
             text-align: right;
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
-            display: flex;
-            align-items: baseline;
-            justify-content: flex-end;
         }
 
         .metric-number {
+            display: inline-block;
             text-align: right;
+            min-width: 4em;
         }
 
         .metric-unit {
@@ -148,7 +147,6 @@
             width: 4ch;
             text-align: left;
             margin-left: 0.3em;
-            flex-shrink: 0;
         }
 
         .error {
