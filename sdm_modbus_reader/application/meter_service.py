@@ -52,7 +52,8 @@ class MeterService:
         self.reading_repository.save(reading)
 
         if self.message_publisher:
-            self.message_publisher.publish_meter_data(meter_config.slug, data)
+            # Convert MeterData to flat dict for publishing
+            self.message_publisher.publish_meter_data(meter_config.slug, data.to_dict())
 
         return reading
 

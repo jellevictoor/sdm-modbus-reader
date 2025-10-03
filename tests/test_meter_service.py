@@ -5,6 +5,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock
 from sdm_modbus_reader.domain.models import MeterType, MeterConfig, MeterReading
+from sdm_modbus_reader.domain.meter_data import SDM120Data
 from sdm_modbus_reader.application.meter_service import MeterService
 
 
@@ -47,7 +48,7 @@ class TestMeterService:
 
     def test_returns_reading_when_meter_read_succeeds(self, meter_service, meter_config, mock_meter_reader):
         """Test that service returns a MeterReading when read succeeds"""
-        meter_data = {"Voltage": 230.5, "Current": 1.2, "Power": 276.6}
+        meter_data = SDM120Data(voltage=230.5, current=1.2, power=276.6)
         mock_meter_reader.read_meter.return_value = meter_data
 
         result = meter_service.read_and_store_meter(meter_config)
@@ -56,7 +57,7 @@ class TestMeterService:
 
     def test_reading_has_correct_meter_id(self, meter_service, meter_config, mock_meter_reader):
         """Test that returned reading contains correct meter ID"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         result = meter_service.read_and_store_meter(meter_config)
@@ -65,7 +66,7 @@ class TestMeterService:
 
     def test_reading_has_correct_meter_name(self, meter_service, meter_config, mock_meter_reader):
         """Test that returned reading contains correct meter name"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         result = meter_service.read_and_store_meter(meter_config)
@@ -74,7 +75,7 @@ class TestMeterService:
 
     def test_stores_reading_in_repository(self, meter_service, meter_config, mock_meter_reader, mock_repository):
         """Test that successful reading is stored in repository"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         meter_service.read_and_store_meter(meter_config)
@@ -83,7 +84,7 @@ class TestMeterService:
 
     def test_publishes_reading_to_mqtt(self, meter_service, meter_config, mock_meter_reader, mock_publisher):
         """Test that successful reading is published via MQTT"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         meter_service.read_and_store_meter(meter_config)
@@ -92,7 +93,7 @@ class TestMeterService:
 
     def test_publishes_with_correct_slug(self, meter_service, meter_config, mock_meter_reader, mock_publisher):
         """Test that MQTT publish uses the meter slug"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         meter_service.read_and_store_meter(meter_config)
@@ -126,7 +127,7 @@ class TestMeterService:
 
     def test_works_without_publisher(self, mock_meter_reader, mock_repository, meter_config):
         """Test that service works when no publisher is configured"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
 
         service = MeterService(
@@ -195,7 +196,7 @@ class TestMeterService:
 
     def test_reading_timestamp_is_current(self, meter_service, meter_config, mock_meter_reader):
         """Test that reading timestamp is set to current time"""
-        meter_data = {"Voltage": 230.5}
+        meter_data = SDM120Data(voltage=230.5)
         mock_meter_reader.read_meter.return_value = meter_data
         before = datetime.now()
 
@@ -206,12 +207,12 @@ class TestMeterService:
 
     def test_preserves_meter_data_without_modification(self, meter_service, meter_config, mock_meter_reader):
         """Test that service doesn't modify the meter data"""
-        original_data = {
-            "Voltage": 230.5,
-            "Current": 1.234,
-            "Power": 276.6,
-            "Cosphi": 0.95
-        }
+        original_data = SDM120Data(
+            voltage=230.5,
+            current=1.234,
+            power=276.6,
+            power_factor=0.95
+        )
         mock_meter_reader.read_meter.return_value = original_data
 
         result = meter_service.read_and_store_meter(meter_config)

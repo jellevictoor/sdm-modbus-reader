@@ -5,6 +5,7 @@ Tests for domain models
 import pytest
 from datetime import datetime
 from sdm_modbus_reader.domain.models import MeterType, MeterConfig, MeterReading
+from sdm_modbus_reader.domain.meter_data import SDM120Data
 
 
 class TestMeterType:
@@ -82,7 +83,7 @@ class TestMeterReading:
     def test_can_create_reading(self):
         """Test creating a meter reading"""
         now = datetime.now()
-        data = {"Voltage": 230.5, "Current": 1.2, "Power": 276.6}
+        data = SDM120Data(voltage=230.5, current=1.2, power=276.6)
 
         reading = MeterReading(
             meter_id=101,
@@ -100,7 +101,7 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Kitchen",
-            data={"Voltage": 230.5},
+            data=SDM120Data(voltage=230.5),
             timestamp=datetime.now()
         )
 
@@ -114,7 +115,7 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Kitchen",
-            data={"Voltage": 230.5},
+            data=SDM120Data(voltage=230.5),
             timestamp=datetime.now()
         )
 
@@ -128,7 +129,7 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Kitchen",
-            data={"Voltage": 230.5},
+            data=SDM120Data(voltage=230.5),
             timestamp=datetime.now()
         )
 
@@ -138,7 +139,7 @@ class TestMeterReading:
 
     def test_to_dict_includes_data(self):
         """Test that to_dict includes meter data"""
-        data = {"Voltage": 230.5, "Current": 1.2}
+        data = SDM120Data(voltage=230.5, current=1.2)
         reading = MeterReading(
             meter_id=101,
             meter_type=MeterType.SDM120,
@@ -149,7 +150,7 @@ class TestMeterReading:
 
         result = reading.to_dict()
 
-        assert result["data"] == data
+        assert result["data"] == data.to_dict()
 
     def test_to_dict_converts_timestamp_to_isoformat(self):
         """Test that to_dict converts timestamp to ISO format string"""
@@ -158,7 +159,7 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Kitchen",
-            data={"Voltage": 230.5},
+            data=SDM120Data(voltage=230.5),
             timestamp=now
         )
 
@@ -172,11 +173,11 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Test",
-            data={},
+            data=SDM120Data(),
             timestamp=datetime.now()
         )
 
-        assert reading.data == {}
+        assert reading.data == SDM120Data()
 
     def test_to_dict_handles_empty_data(self):
         """Test that to_dict correctly handles empty data"""
@@ -184,7 +185,7 @@ class TestMeterReading:
             meter_id=101,
             meter_type=MeterType.SDM120,
             meter_name="Test",
-            data={},
+            data=SDM120Data(),
             timestamp=datetime.now()
         )
 

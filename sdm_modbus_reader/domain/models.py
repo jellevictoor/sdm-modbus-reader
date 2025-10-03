@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import Dict
 from enum import Enum
 
+from sdm_modbus_reader.domain.meter_data import MeterData
+
 
 class MeterType(Enum):
     """Supported meter types"""
@@ -32,7 +34,7 @@ class MeterReading:
     meter_id: int
     meter_type: MeterType
     meter_name: str
-    data: Dict[str, float]
+    data: MeterData
     timestamp: datetime
 
     def to_dict(self) -> dict:
@@ -41,6 +43,6 @@ class MeterReading:
             "meter_id": self.meter_id,
             "meter_type": self.meter_type.value,
             "meter_name": self.meter_name,
-            "data": self.data,
+            "data": self.data.to_dict(),  # Convert MeterData to flat dict
             "timestamp": self.timestamp.isoformat()
         }

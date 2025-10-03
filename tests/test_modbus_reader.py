@@ -101,7 +101,7 @@ class TestModbusMeterReader:
 
         result = modbus_reader.read_meter(device_id=101, meter_type=MeterType.SDM120)
 
-        assert "Voltage" in result
+        assert result.voltage is not None
 
     @patch('sdm_modbus_reader.adapters.modbus_reader.time.sleep')
     def test_can_read_sdm630_meter_data(self, mock_sleep, modbus_reader):
@@ -135,7 +135,12 @@ class TestModbusMeterReader:
 
         result = modbus_reader.read_meter(device_id=100, meter_type=MeterType.SDM630)
 
-        assert all(key in result for key in ["Voltage/L1", "Voltage/L2", "Voltage/L3"])
+        assert result.phase_l1 is not None
+        assert result.phase_l2 is not None
+        assert result.phase_l3 is not None
+        assert result.phase_l1.voltage is not None
+        assert result.phase_l2.voltage is not None
+        assert result.phase_l3.voltage is not None
 
     @patch('sdm_modbus_reader.adapters.modbus_reader.time.sleep')
     def test_returns_none_when_all_registers_fail(self, mock_sleep, modbus_reader):
@@ -178,4 +183,4 @@ class TestModbusMeterReader:
 
         result = modbus_reader.read_meter(device_id=101, meter_type=MeterType.SDM120)
 
-        assert len(result) > 0
+        assert len(result.to_dict()) > 0

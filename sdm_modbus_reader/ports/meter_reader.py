@@ -2,8 +2,9 @@
 Port - Interface for reading meters
 """
 from abc import ABC, abstractmethod
-from typing import Optional, Dict
+from typing import Optional
 from sdm_modbus_reader.domain.models import MeterType
+from sdm_modbus_reader.domain.meter_data import MeterData
 
 
 class MeterReader(ABC):
@@ -20,7 +21,7 @@ class MeterReader(ABC):
         pass
 
     @abstractmethod
-    def read_meter(self, device_id: int, meter_type: MeterType) -> Optional[Dict[str, float]]:
+    def read_meter(self, device_id: int, meter_type: MeterType) -> Optional[MeterData]:
         """
         Read all available data from a meter
 
@@ -29,6 +30,6 @@ class MeterReader(ABC):
             meter_type: The type of meter to read
 
         Returns:
-            Dictionary of register names to values, or None if read failed
+            MeterData (SDM120Data or SDM630Data), or None if read failed
         """
         pass

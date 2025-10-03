@@ -215,11 +215,12 @@ def main(
 
                 if reading:
                     success_count += 1
-                    total_registers += len(reading.data)
-                    typer.echo(f"✓ {len(reading.data)} registers")
+                    data_dict = reading.data.to_dict()
+                    total_registers += len(data_dict)
+                    typer.echo(f"✓ {len(data_dict)} registers")
 
                     # Display summary
-                    display_meter_summary(meter.meter_type, reading.data)
+                    display_meter_summary(meter.meter_type, data_dict)
                 else:
                     error_count += 1
                     typer.echo(f"✗ TIMEOUT/ERROR")
