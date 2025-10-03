@@ -4,9 +4,9 @@ Application service - Orchestrates meter reading operations
 from datetime import datetime
 from typing import Optional, Dict
 
-from sdm_modbus_reader.ports.meter_reader import IMeterReader
-from sdm_modbus_reader.ports.message_publisher import IMessagePublisher
-from sdm_modbus_reader.ports.reading_repository import IReadingRepository
+from sdm_modbus_reader.ports.meter_reader import MeterReader
+from sdm_modbus_reader.ports.message_publisher import MessagePublisher
+from sdm_modbus_reader.ports.reading_repository import ReadingRepository
 from sdm_modbus_reader.domain.models import MeterConfig, MeterReading, MeterType
 
 
@@ -15,9 +15,9 @@ class MeterService:
 
     def __init__(
         self,
-        meter_reader: IMeterReader,
-        reading_repository: IReadingRepository,
-        message_publisher: Optional[IMessagePublisher] = None
+        meter_reader: MeterReader,
+        reading_repository: ReadingRepository,
+        message_publisher: Optional[MessagePublisher] = None
     ):
         self.meter_reader = meter_reader
         self.reading_repository = reading_repository

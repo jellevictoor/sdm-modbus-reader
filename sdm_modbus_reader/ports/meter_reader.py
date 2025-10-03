@@ -6,7 +6,7 @@ from typing import Optional, Dict
 from sdm_modbus_reader.domain.models import MeterType
 
 
-class IMeterReader(ABC):
+class MeterReader(ABC):
     """Interface for reading data from energy meters"""
 
     @abstractmethod

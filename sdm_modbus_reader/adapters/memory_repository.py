@@ -4,11 +4,11 @@ Adapter - In-memory implementation of IReadingRepository
 from typing import Dict, Optional
 import threading
 
-from sdm_modbus_reader.ports.reading_repository import IReadingRepository
+from sdm_modbus_reader.ports.reading_repository import ReadingRepository
 from sdm_modbus_reader.domain.models import MeterReading
 
 
-class InMemoryReadingRepository(IReadingRepository):
+class InMemoryReadingRepository(ReadingRepository):
     """Thread-safe in-memory storage for meter readings"""
 
     def __init__(self):

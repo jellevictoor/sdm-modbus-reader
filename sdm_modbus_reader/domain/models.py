@@ -10,8 +10,6 @@ from enum import Enum
 class MeterType(Enum):
     """Supported meter types"""
     SDM120 = "SDM120"
-    SDM220 = "SDM220"
-    SDM230 = "SDM230"
     SDM630 = "SDM630"
 
 

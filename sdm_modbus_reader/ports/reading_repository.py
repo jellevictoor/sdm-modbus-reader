@@ -6,7 +6,7 @@ from typing import Optional, Dict
 from sdm_modbus_reader.domain.models import MeterReading
 
 
-class IReadingRepository(ABC):
+class ReadingRepository(ABC):
     """Interface for storing and retrieving meter readings"""
 
     @abstractmethod

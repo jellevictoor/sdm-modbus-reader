@@ -4,10 +4,10 @@ Adapter - MQTT implementation of IMessagePublisher
 import paho.mqtt.client as mqtt
 from typing import Dict, Optional
 
-from sdm_modbus_reader.ports.message_publisher import IMessagePublisher
+from sdm_modbus_reader.ports.message_publisher import MessagePublisher
 
 
-class MQTTPublisher(IMessagePublisher):
+class MQTTPublisher(MessagePublisher):
     """Publishes meter data to MQTT broker"""
 
     def __init__(
