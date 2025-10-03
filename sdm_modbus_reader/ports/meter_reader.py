@@ -1,0 +1,34 @@
+"""
+Port - Interface for reading meters
+"""
+from abc import ABC, abstractmethod
+from typing import Optional, Dict
+from sdm_modbus_reader.domain.models import MeterType
+
+
+class IMeterReader(ABC):
+    """Interface for reading data from energy meters"""
+
+    @abstractmethod
+    def connect(self) -> bool:
+        """Connect to the meter communication interface"""
+        pass
+
+    @abstractmethod
+    def disconnect(self):
+        """Disconnect from the meter communication interface"""
+        pass
+
+    @abstractmethod
+    def read_meter(self, device_id: int, meter_type: MeterType) -> Optional[Dict[str, float]]:
+        """
+        Read all available data from a meter
+
+        Args:
+            device_id: The Modbus address of the meter
+            meter_type: The type of meter to read
+
+        Returns:
+            Dictionary of register names to values, or None if read failed
+        """
+        pass

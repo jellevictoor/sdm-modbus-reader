@@ -1,10 +1,18 @@
 """
 FastAPI web interface for SDM meter data
 """
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from .data_store import meter_store
+from sdm_modbus_reader.adapters.memory_repository import InMemoryReadingRepository
+
+# Global repository instance shared with main.py
+# In a production app, this would be injected via dependency injection
+_repository = None
+
+def set_repository(repository: InMemoryReadingRepository):
+    """Set the repository instance to use"""
+    global _repository
+    _repository = repository
 
 app = FastAPI(title="SDM Meter Monitor")
 
@@ -12,16 +20,23 @@ app = FastAPI(title="SDM Meter Monitor")
 @app.get("/api/meters")
 async def get_meters():
     """Get all meter data"""
-    return meter_store.get_all_meters()
+    if _repository is None:
+        return {}
+
+    readings = _repository.get_all()
+    return {meter_id: reading.to_dict() for meter_id, reading in readings.items()}
 
 
 @app.get("/api/meters/{meter_id}")
 async def get_meter(meter_id: int):
     """Get specific meter data"""
-    data = meter_store.get_meter(meter_id)
-    if data is None:
+    if _repository is None:
+        return {"error": "Repository not initialized"}
+
+    reading = _repository.get_by_meter_id(meter_id)
+    if reading is None:
         return {"error": "Meter not found"}
-    return data
+    return reading.to_dict()
 
 
 @app.get("/", response_class=HTMLResponse)

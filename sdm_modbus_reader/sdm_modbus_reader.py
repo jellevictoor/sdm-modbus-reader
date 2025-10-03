@@ -13,7 +13,7 @@ import threading
 import uvicorn
 from typing import Dict, Optional, List
 from typing_extensions import Annotated
-from .data_store import meter_store
+from sdm_modbus_reader.data_store import meter_store
 
 app = typer.Typer(help="SDM Modbus Meter Reader - Monitor SDM120/SDM630 energy meters")
 

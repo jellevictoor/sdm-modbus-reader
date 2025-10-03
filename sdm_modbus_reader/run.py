@@ -5,12 +5,13 @@ Run both the SDM reader and FastAPI server
 import sys
 import threading
 import uvicorn
-from .sdm_modbus_reader import app as typer_app
+
+from sdm_modbus_reader.sdm_modbus_reader import app
 
 
 def run_reader():
     """Run the modbus reader in a thread"""
-    typer_app()
+    app()
 
 
 def run_api(port=8000):

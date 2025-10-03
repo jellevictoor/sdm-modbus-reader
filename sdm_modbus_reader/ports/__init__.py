@@ -1,0 +1,3 @@
+"""
+Ports - Interfaces for adapters
+"""
