@@ -31,11 +31,47 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
         .last-update {
             color: rgba(255,255,255,0.9);
-            text-align: center;
-            margin-bottom: 20px;
             font-size: 0.9em;
+        }
+
+        .view-toggle {
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #667eea;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+
+        .view-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .view-toggle:active {
+            transform: translateY(0);
+        }
+
+        .expert-metric {
+            display: none;
+        }
+
+        .expert-mode .expert-metric {
+            display: table-row;
         }
 
         .meter-section {
@@ -177,7 +213,10 @@
 <body>
     <div class="container">
         <h1>⚡ SDM Meter Monitor</h1>
-        <div class="last-update" id="lastUpdate">Loading...</div>
+        <div class="header-controls">
+            <div class="last-update" id="lastUpdate">Loading...</div>
+            <button class="view-toggle" id="viewToggle" onclick="toggleView()">Show Expert View</button>
+        </div>
 
         <div class="meter-section">
             <h2>Single Phase Meters</h2>
@@ -191,6 +230,20 @@
     </div>
 
     <script>
+        // Expert metrics that should be hidden in simple view
+        const EXPERT_METRICS = ['ApparentPower', 'ReactivePower', 'Cosphi', 'PhaseAngle', 'Frequency'];
+
+        function isExpertMetric(metric) {
+            return EXPERT_METRICS.includes(metric);
+        }
+
+        function toggleView() {
+            const body = document.body;
+            const button = document.getElementById('viewToggle');
+            const isExpert = body.classList.toggle('expert-mode');
+            button.textContent = isExpert ? 'Show Simple View' : 'Show Expert View';
+        }
+
         function formatValue(value, decimals = 2) {
             if (value === null || value === undefined) return 'N/A';
             const num = Number(value).toFixed(decimals);
@@ -262,8 +315,9 @@
                 if (data[metric] !== undefined) {
                     const unit = getUnit(metric);
                     const icon = getIcon(metric);
+                    const expertClass = isExpertMetric(metric) ? ' class="expert-metric"' : '';
                     html += `
-                        <tr>
+                        <tr${expertClass}>
                             <td class="metric-name">${icon} ${metric}</td>
                             <td class="metric-value"><span class="metric-number">${formatValue(data[metric])}</span><span class="metric-unit">${unit}</span></td>
                         </tr>
@@ -311,8 +365,9 @@
                 if (l1 !== undefined || l2 !== undefined || l3 !== undefined || total !== undefined) {
                     const unit = getUnit(metric);
                     const icon = getIcon(metric);
+                    const expertClass = isExpertMetric(metric) ? ' class="expert-metric"' : '';
                     html += `
-                        <tr>
+                        <tr${expertClass}>
                             <td class="metric-name">${icon} ${metric}</td>
                             <td class="metric-value"><span class="metric-number">${formatValue(l1)}</span><span class="metric-unit">${unit}</span></td>
                             <td class="metric-value"><span class="metric-number">${formatValue(l2)}</span><span class="metric-unit">${unit}</span></td>
