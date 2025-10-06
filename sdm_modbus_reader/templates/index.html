@@ -45,26 +45,67 @@
             font-size: 0.9em;
         }
 
-        .view-toggle {
-            background: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
+        .view-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .view-toggle-label {
+            color: rgba(255,255,255,0.9);
             font-size: 0.9em;
-            font-weight: 600;
-            color: #667eea;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
             cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.3);
+            transition: 0.3s;
+            border-radius: 28px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: all 0.2s;
         }
 
-        .view-toggle:hover {
-            transform: translateY(-2px);
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: white;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+            background-color: #667eea;
+        }
+
+        .toggle-slider:hover {
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-        }
-
-        .view-toggle:active {
-            transform: translateY(0);
         }
 
         .expert-metric {
@@ -216,7 +257,14 @@
         <h1>⚡ SDM Meter Monitor</h1>
         <div class="header-controls">
             <div class="last-update" id="lastUpdate">Loading...</div>
-            <button class="view-toggle" id="viewToggle" onclick="toggleView()">Show Expert View</button>
+            <div class="view-toggle-container">
+                <span class="view-toggle-label">Simple</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="viewToggle" onchange="toggleView()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="view-toggle-label">Expert</span>
+            </div>
         </div>
 
         <div class="meter-section">
@@ -240,9 +288,12 @@
 
         function toggleView() {
             const body = document.body;
-            const button = document.getElementById('viewToggle');
-            const isExpert = body.classList.toggle('expert-mode');
-            button.textContent = isExpert ? 'Show Simple View' : 'Show Expert View';
+            const checkbox = document.getElementById('viewToggle');
+            if (checkbox.checked) {
+                body.classList.add('expert-mode');
+            } else {
+                body.classList.remove('expert-mode');
+            }
         }
 
         function formatValue(value, decimals = 2) {
@@ -310,7 +361,7 @@
             ];
             const energyMetrics = ['Import', 'Export', 'Sum'];
 
-            let html = '<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Metric</th><th>&nbsp;</th></tr></thead><tbody>';
 
             for (const metric of metrics) {
                 if (data[metric] !== undefined) {
