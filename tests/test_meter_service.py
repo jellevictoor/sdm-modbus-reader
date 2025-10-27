@@ -101,21 +101,29 @@ class TestMeterService:
         call_args = mock_publisher.publish_meter_data.call_args[0]
         assert call_args[0] == "kitchen-meter"
 
-    def test_returns_none_when_read_fails(self, meter_service, meter_config, mock_meter_reader):
-        """Test that None is returned when meter read fails"""
+    def test_returns_failed_reading_when_read_fails(self, meter_service, meter_config, mock_meter_reader):
+        """Test that a failed MeterReading is returned when meter read fails"""
         mock_meter_reader.read_meter.return_value = None
 
         result = meter_service.read_and_store_meter(meter_config)
 
-        assert result is None
+        assert result is not None
+        assert result.success is False
+        assert result.error_message is not None
+        assert result.data is None
 
-    def test_does_not_store_failed_reading(self, meter_service, meter_config, mock_meter_reader, mock_repository):
-        """Test that failed readings are not stored"""
+    def test_stores_failed_reading(self, meter_service, meter_config, mock_meter_reader, mock_repository):
+        """Test that failed readings are stored for monitoring"""
         mock_meter_reader.read_meter.return_value = None
 
         meter_service.read_and_store_meter(meter_config)
 
-        mock_repository.save.assert_not_called()
+        # Verify save was called once
+        mock_repository.save.assert_called_once()
+
+        # Verify the saved reading indicates failure
+        saved_reading = mock_repository.save.call_args[0][0]
+        assert saved_reading.success is False
 
     def test_does_not_publish_failed_reading(self, meter_service, meter_config, mock_meter_reader, mock_publisher):
         """Test that failed readings are not published"""
