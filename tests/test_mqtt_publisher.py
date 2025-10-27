@@ -228,8 +228,8 @@ class TestMQTTPublisherAdapter:
 
         assert payload == "0.0"
 
-    def test_publishes_with_retain_flag(self, mqtt_broker):
-        """Verify messages are published with retain flag set"""
+    def test_publishes_without_retain_flag(self, mqtt_broker):
+        """Verify messages are published without retain flag"""
         host, port = mqtt_broker
         publisher = MQTTPublisher(
             broker=host,
@@ -238,23 +238,23 @@ class TestMQTTPublisherAdapter:
         )
         publisher.connect()
 
-        # Publish with retain
+        # Publish without retain
         data = {"Voltage": 230.5}
         publisher.publish_meter_data("test", data)
         time.sleep(0.5)  # Give broker time to process
 
-        # Create new subscriber to get retained message
+        # Create new subscriber to check if message was retained
         subscriber = MQTTTestSubscriber(host, port)
         subscriber.connect()
 
-        # Wait for retained message to arrive
-        assert subscriber.wait_for_messages(1, timeout=3.0)
-        _, retain = subscriber.get_message("test/retain-test/test/Voltage")
+        # Wait a bit - no retained message should arrive
+        time.sleep(1.0)
 
         subscriber.disconnect()
         publisher.disconnect()
 
-        assert retain is True
+        # No messages should be received since messages are not retained
+        assert len(subscriber.messages) == 0
 
     def test_handles_empty_data_gracefully(self, mqtt_publisher, mqtt_subscriber):
         """Verify no messages are published for empty data"""

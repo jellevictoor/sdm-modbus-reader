@@ -31,27 +31,38 @@ class MeterService:
             meter_config: Configuration for the meter to read
 
         Returns:
-            The meter reading if successful, None otherwise
+            The meter reading (successful or failed)
         """
         # Read meter data
         data = self.meter_reader.read_meter(meter_config.address, meter_config.meter_type)
 
+        # Create reading (successful or failed)
         if data is None:
-            return None
+            reading = MeterReading(
+                meter_id=meter_config.address,
+                meter_type=meter_config.meter_type,
+                meter_name=meter_config.display_name,
+                data=None,
+                timestamp=datetime.now(),
+                success=False,
+                error_message="Timeout or communication error"
+            )
+        else:
+            reading = MeterReading(
+                meter_id=meter_config.address,
+                meter_type=meter_config.meter_type,
+                meter_name=meter_config.display_name,
+                data=data,
+                timestamp=datetime.now(),
+                success=True,
+                error_message=None
+            )
 
-        # Create reading
-        reading = MeterReading(
-            meter_id=meter_config.address,
-            meter_type=meter_config.meter_type,
-            meter_name=meter_config.display_name,
-            data=data,
-            timestamp=datetime.now()
-        )
-
-        # Store reading
+        # Store reading (even if failed)
         self.reading_repository.save(reading)
 
-        if self.message_publisher:
+        # Only publish to MQTT if successful
+        if self.message_publisher and data is not None:
             # Convert MeterData to flat dict for publishing
             self.message_publisher.publish_meter_data(meter_config.slug, data.to_dict())
 

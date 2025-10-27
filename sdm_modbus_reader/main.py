@@ -213,7 +213,7 @@ def main(
 
                 reading = container.meter_service.read_and_store_meter(meter)
 
-                if reading:
+                if reading and reading.success:
                     success_count += 1
                     data_dict = reading.data.to_dict()
                     total_registers += len(data_dict)

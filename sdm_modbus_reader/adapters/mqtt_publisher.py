@@ -57,4 +57,4 @@ class MQTTPublisher(MessagePublisher):
             else:
                 formatted = f"{value:.6f}"
 
-            self.client.publish(topic, formatted, retain=True)
+            self.client.publish(topic, formatted, retain=False)

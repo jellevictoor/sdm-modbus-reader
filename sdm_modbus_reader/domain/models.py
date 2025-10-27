@@ -36,6 +36,8 @@ class MeterReading:
     meter_name: str
     data: MeterData
     timestamp: datetime
+    success: bool = True
+    error_message: str = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization"""
@@ -43,6 +45,8 @@ class MeterReading:
             "meter_id": self.meter_id,
             "meter_type": self.meter_type.value,
             "meter_name": self.meter_name,
-            "data": self.data.to_dict(),  # Convert MeterData to flat dict
-            "timestamp": self.timestamp.isoformat()
+            "data": self.data.to_dict() if self.data else {},  # Convert MeterData to flat dict
+            "timestamp": self.timestamp.isoformat(),
+            "success": self.success,
+            "error_message": self.error_message
         }
