@@ -232,6 +232,15 @@ def main(
             typer.echo("-" * 70)
             typer.echo(f"Summary: {success_count}/{len(meters)} meters OK, "
                   f"{total_registers} registers read, {cycle_time:.1f}s")
+
+            # A fully-failed cycle means the serial link is wedged; reopening the
+            # port recovers it without a manual container restart.
+            if success_count == 0:
+                typer.echo("! No meters responded - reconnecting serial port...")
+                if container.meter_reader.reconnect():
+                    typer.echo("✓ Serial port reconnected")
+                else:
+                    typer.echo("✗ Serial port reconnect failed")
             typer.echo()
 
             # Wait for next cycle

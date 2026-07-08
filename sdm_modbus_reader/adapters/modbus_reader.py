@@ -47,6 +47,11 @@ class ModbusMeterReader(MeterReader):
         """Close the Modbus connection"""
         self.client.close()
 
+    def reconnect(self) -> bool:
+        """Close and reopen the serial port to recover a wedged link"""
+        self.client.close()
+        return self.client.connect()
+
     def _read_float32(self, device_id: int, register: int) -> Optional[float]:
         """Read IEEE754 float32 from SDM meter"""
         try:

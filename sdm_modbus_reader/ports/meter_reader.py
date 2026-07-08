@@ -21,6 +21,11 @@ class MeterReader(ABC):
         pass
 
     @abstractmethod
+    def reconnect(self) -> bool:
+        """Close and reopen the communication interface to recover a wedged link"""
+        pass
+
+    @abstractmethod
     def read_meter(self, device_id: int, meter_type: MeterType) -> Optional[MeterData]:
         """
         Read all available data from a meter

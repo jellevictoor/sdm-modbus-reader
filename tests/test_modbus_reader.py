@@ -40,6 +40,24 @@ class TestModbusMeterReader:
 
         assert result is False
 
+    def test_reconnect_closes_and_reopens_the_port(self, modbus_reader):
+        """Reconnect must close the stale port then reopen it (recovers a wedged serial link)"""
+        modbus_reader.client.connect.return_value = True
+
+        result = modbus_reader.reconnect()
+
+        assert result is True
+        modbus_reader.client.close.assert_called_once()
+        modbus_reader.client.connect.assert_called_once()
+
+    def test_reconnect_reports_failure_when_port_stays_down(self, modbus_reader):
+        """Reconnect returns False when the port cannot be reopened"""
+        modbus_reader.client.connect.return_value = False
+
+        result = modbus_reader.reconnect()
+
+        assert result is False
+
     def test_can_read_valid_float32_value(self, modbus_reader):
         """Test that valid float32 values can be read from registers"""
         mock_response = Mock()
