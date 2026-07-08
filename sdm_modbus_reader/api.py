@@ -47,4 +47,4 @@ async def get_meter(meter_id: int):
 @app.get("/")
 async def root(request: Request):
     """Serve the main HTML page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
