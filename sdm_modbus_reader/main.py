@@ -182,12 +182,14 @@ def main(
     typer.echo("=" * 70)
     typer.echo()
 
-    # Connect to MQTT
+    # Connect to MQTT - connect() only schedules the attempt; it keeps
+    # retrying on its own (including this first attempt) until the broker
+    # is reachable, so there's no need to retry it from here.
     if container.message_publisher:
         if container.message_publisher.connect():
-            typer.echo("✓ Connected to MQTT broker")
+            typer.echo("MQTT connect scheduled - will publish once the broker is reachable")
         else:
-            typer.echo("✗ Failed to connect to MQTT")
+            typer.echo("✗ Failed to schedule MQTT connection")
             typer.echo("  Continuing without MQTT...")
             container.message_publisher = None
 

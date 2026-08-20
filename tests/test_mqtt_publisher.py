@@ -278,10 +278,57 @@ class TestMQTTPublisherAdapter:
         assert kitchen_voltage == "230.00"
         assert garage_voltage == "231.00"
 
-    def test_connection_failure_returns_false(self):
-        """Verify connection to invalid broker returns False"""
+    def test_connect_schedules_attempt_even_for_unreachable_broker(self):
+        """
+        connect() only schedules the connection attempt now (via
+        connect_async) - it no longer synchronously proves reachability.
+        This is what lets it recover on its own from a broker that isn't up
+        yet; is_connected() is the source of truth for actual state.
+        """
         publisher = MQTTPublisher(broker="invalid-broker-that-does-not-exist", port=1883)
 
         result = publisher.connect()
 
-        assert result is False
+        assert result is True
+        time.sleep(1.0)
+        assert publisher.is_connected() is False
+
+    def test_is_connected_false_before_connect(self, mqtt_broker):
+        """Verify is_connected reports False before connect() is called"""
+        host, port = mqtt_broker
+        publisher = MQTTPublisher(broker=host, port=port)
+
+        assert publisher.is_connected() is False
+
+    def test_is_connected_true_after_connect(self, mqtt_publisher):
+        """Verify is_connected reports True once connected"""
+        assert mqtt_publisher.is_connected() is True
+
+    def test_connects_automatically_once_broker_becomes_reachable(self):
+        """
+        Regression: after a power outage this container can start before
+        the broker container is ready, and the broker's own port isn't
+        known/bindable in advance in production (it's a fixed host:port).
+        connect() must not need to be retried by the caller - once the
+        broker becomes reachable, the client connects on its own.
+        """
+        bound_port = 18830
+        publisher = MQTTPublisher(broker="127.0.0.1", port=bound_port, topic_prefix="test/race")
+        assert publisher.connect() is True
+        assert publisher.is_connected() is False
+
+        container = DockerContainer("eclipse-mosquitto:2.0")
+        container.with_bind_ports(1883, bound_port)
+        container.with_command("mosquitto -c /mosquitto-no-auth.conf")
+        container.start()
+        try:
+            wait_for_logs(container, "mosquitto version", timeout=30)
+
+            deadline = time.time() + 15
+            while time.time() < deadline and not publisher.is_connected():
+                time.sleep(0.5)
+
+            assert publisher.is_connected() is True
+        finally:
+            publisher.disconnect()
+            container.stop()

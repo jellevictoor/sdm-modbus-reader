@@ -19,6 +19,11 @@ class MessagePublisher(ABC):
         pass
 
     @abstractmethod
+    def is_connected(self) -> bool:
+        """Check whether there is currently a live connection to the broker"""
+        pass
+
+    @abstractmethod
     def publish_meter_data(self, meter_slug: str, data: Dict[str, float]):
         """
         Publish meter data

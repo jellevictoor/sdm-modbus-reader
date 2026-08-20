@@ -28,9 +28,19 @@ class MQTTPublisher(MessagePublisher):
             self.client.username_pw_set(username, password)
 
     def connect(self) -> bool:
-        """Connect to MQTT broker"""
+        """
+        Schedule a connection to the MQTT broker.
+
+        Uses connect_async() rather than connect(): if the broker isn't
+        reachable yet (e.g. this process wins a startup race against the
+        broker container), the network loop thread keeps retrying with
+        backoff on its own - both for that initial connection and for any
+        later drop - so the caller never needs to detect a failure and
+        retry connect() itself. is_connected() reports the live state.
+        """
         try:
-            self.client.connect(self.broker, self.port, 60)
+            self.client.reconnect_delay_set(min_delay=1, max_delay=60)
+            self.client.connect_async(self.broker, self.port, 60)
             self.client.loop_start()
             return True
         except Exception:
@@ -40,6 +50,10 @@ class MQTTPublisher(MessagePublisher):
         """Disconnect from MQTT broker"""
         self.client.loop_stop()
         self.client.disconnect()
+
+    def is_connected(self) -> bool:
+        """Check whether there is currently a live connection to the broker"""
+        return self.client.is_connected()
 
     def publish_meter_data(self, meter_slug: str, data: Dict[str, float]):
         """Publish meter data to MQTT"""
